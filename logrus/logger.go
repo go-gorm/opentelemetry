@@ -123,7 +123,6 @@ func (w *Writer) SetOutput(writer io.Writer) {
 	w.log.SetOutput(writer)
 }
 
-// 实现gorm/logger.Writer接口
 func (w *Writer) Printf(format string, v ...interface{}) {
 	w.log.Info(fmt.Sprintf(format, v...))
 }
