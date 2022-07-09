@@ -1,16 +1,17 @@
 # opentelemetry
 
-- tracing 
+---
+- Tracing 
   - Hook `Create` `Query` `Delete` `Update` `Row` `Raw` 
-- metrics 
+- Metrics 
   - Report `dbstats` raw data
-- logging
+- Logrus
   - Use logrus replace gorm default logger
   - Use hook to report span message
 - Provider
   - Support setting via environment variables
-- example 
-  - Simple example use tracing and metrics.
+- Example 
+  - Simple example work with tracing and metrics
 
 ---
 
