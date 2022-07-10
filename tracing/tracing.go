@@ -36,7 +36,7 @@ func NewPlugin(opts ...Option) gorm.Plugin {
 	if p.provider == nil {
 		p.provider = otel.GetTracerProvider()
 	}
-	p.tracer = p.provider.Tracer("github.com/uptrace/opentelemetry-go-extra/otelgorm")
+	p.tracer = p.provider.Tracer("gorm.io/plugin/opentelemetry")
 
 	return p
 }

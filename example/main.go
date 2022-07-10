@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/uptrace/uptrace-go/uptrace"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -71,8 +70,6 @@ func PrintTraceID(ctx context.Context) {
 
 func TraceURL(span trace.Span) string {
 	switch {
-	case os.Getenv("UPTRACE_DSN") != "":
-		return uptrace.TraceURL(span)
 	case os.Getenv("OTEL_EXPORTER_JAEGER_ENDPOINT") != "":
 		return fmt.Sprintf("http://localhost:16686/trace/%s", span.SpanContext().TraceID())
 	default:
