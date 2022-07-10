@@ -95,7 +95,7 @@ func main() {
 		panic(err)
 	}
 
-	tracer := otel.Tracer("app_or_package_name")
+	tracer := otel.Tracer("gorm.io/plugin/opentelemetry")
 
 	ctx, span := tracer.Start(ctx, "root")
 	defer span.End()

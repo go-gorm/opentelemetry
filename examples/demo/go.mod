@@ -1,6 +1,8 @@
-module opentelemetry-gorm/logrus/example
+module gorm.io/plugin/example
 
 go 1.18
+
+replace gorm.io/plugin/opentelemetry => ./../..
 
 require (
 	go.opentelemetry.io/otel v1.8.0
@@ -23,4 +25,3 @@ require (
 	golang.org/x/sys v0.0.0-20220520151302-bc2c85ada10a // indirect
 )
 
-replace gorm.io/plugin/opentelemetry => ../../opentelemetry
