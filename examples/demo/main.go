@@ -4,16 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
+	"gorm.io/plugin/opentelemetry/logging/logrus"
 	"gorm.io/plugin/opentelemetry/tracing"
 )
 
@@ -82,16 +84,21 @@ func main() {
 	shutdown := ConfigureOpentelemetry(ctx)
 	defer shutdown()
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	logger := logger.New(
+		logrus.NewWriter(),
+		logger.Config{
+			SlowThreshold: time.Millisecond,
+			LogLevel:      logger.Info,
+			Colorful:      false,
+		},
+	)
+
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
 	if err != nil {
 		panic(err)
 	}
 
-	sr := tracetest.NewSpanRecorder()
-
-	provider := sdktrace.NewTracerProvider(sdktrace.WithSpanProcessor(sr))
-
-	if err := db.Use(tracing.NewPlugin(tracing.WithTracerProvider(provider))); err != nil {
+	if err := db.Use(tracing.NewPlugin()); err != nil {
 		panic(err)
 	}
 
