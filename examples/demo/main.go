@@ -78,6 +78,7 @@ func TraceURL(span trace.Span) string {
 		return fmt.Sprintf("http://localhost:16686/trace/%s", span.SpanContext().TraceID())
 	}
 }
+
 func main() {
 	ctx := context.Background()
 
