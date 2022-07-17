@@ -1,4 +1,7 @@
-run: `docker-compose up`
+Run 
+`docker-compose up -d `
 
-http://localhost:9090/ get result.
+View Metrics
+
+You can then navigate to http://localhost:9090 to access the Prometheus UI.
 ![prometheus.png](static/prometheus.png)
