@@ -1,17 +1,46 @@
-Stdout exporter (default):
+# Tracing example
 
-`go run .`
+## Case 1: Stdout exporter (default):
+
+#### 1. Run demo
+
+```shell 
+cd examples/demo
+go run main.go
+```
+
+#### Screenshots
 
 ![stdout.png](static/stdout.png)
 
 ---
-Jaeger exporter:
 
-Docker: `docker-compose up -d`
+## Case 2: Jaeger exporter:
 
-Run: `OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces go run .`
+#### 1.Setup Basic Dependence
 
-View Trace
+```shell 
+docker-compose up -d
+```
+
+#### 2. Set environment variables
+
+```shell 
+export OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces
+```
+
+#### 3. Run demo
+
+```shell 
+cd examples/demo
+go run main.go
+```
+
+### View Trace
+
 You can then navigate to http://localhost:16686 to access the Jaeger UI.
+
+#### Screenshots
+
 ![static/jeager.png](static/jeager.png)
-        
+
