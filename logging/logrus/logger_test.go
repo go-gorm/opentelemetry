@@ -8,6 +8,8 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
@@ -43,28 +45,33 @@ func TestLogger(t *testing.T) {
 			Colorful:      false,
 		},
 	)
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
 
-	logger.Info(ctx, "log from origin logrus")
+	if err != nil {
+		panic(err)
+	}
+
+	db.Logger.Info(ctx, "log from origin logrus")
 
 	tracer := otel.Tracer("test otel std logger")
 
 	ctx, span := tracer.Start(ctx, "root")
 
-	logger.Info(ctx, "hello %s", "world")
+	db.Logger.Info(ctx, "hello %s", "world")
 
 	span.End()
 
 	ctx, child := tracer.Start(ctx, "child")
 
-	logger.Warn(ctx, "foo %s", "bar")
+	db.Logger.Warn(ctx, "foo %s", "bar")
 
 	child.End()
 
 	ctx, errSpan := tracer.Start(ctx, "error")
 
-	logger.Error(ctx, "error %s", "this is a error")
+	db.Logger.Error(ctx, "error %s", "this is a error")
 
-	logger.Info(ctx, "no trace context")
+	db.Logger.Info(ctx, "no trace context")
 
 	errSpan.End()
 }
