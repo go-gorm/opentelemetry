@@ -1,5 +1,5 @@
 # opentelemetry
-
+[Opentelemetry](https://opentelemetry.io/) for [gorm](https://github.com/go-gorm/gorm)
 ## Feature 
 ### Tracing 
   - support tracing gorm by Hook `Create` `Query` `Delete` `Update` `Row` `Raw` 
@@ -17,10 +17,12 @@
 
 ~~~go
 package main
+
 import(
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/opentelemetry/logging/logrus"
 )
+
 func init(){
 	logger := logger.New(
 		logrus.NewWriter(),
@@ -37,9 +39,11 @@ func init(){
 
 ~~~go
 package main
+
 import(
 	"gorm.io/plugin/opentelemetry/tracing"
 )
+
 func init(){
 
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
