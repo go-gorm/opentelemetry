@@ -31,7 +31,7 @@ func init(){
 			Colorful:      false,
 		},
 	)
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), 	      &gorm.Config{Logger: logger})
 }
 ~~~
 ### Set tracing and metrics
