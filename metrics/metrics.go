@@ -14,8 +14,6 @@ import (
 
 const instrumName = "opentelemetry/otel"
 
-var dbRowsAffected = attribute.Key("db.rows_affected")
-
 type config struct {
 	tracerProvider trace.TracerProvider
 	tracer         trace.Tracer
@@ -30,6 +28,9 @@ func newConfig() *config {
 	c := &config{
 		tracerProvider: otel.GetTracerProvider(),
 		meterProvider:  global.MeterProvider(),
+		tracer:         nil,
+		meter:          nil,
+		attrs:          nil,
 	}
 	return c
 }
