@@ -1,20 +1,22 @@
 # opentelemetry
 
-Feature
----
-- Tracing 
+## Feature 
+### Tracing 
   - support tracing gorm by Hook `Create` `Query` `Delete` `Update` `Row` `Raw` 
-- Metrics 
-  - Collect DB Status 
-- Logrus
+### Metrics 
+  - Collect DB Status
+### Logging
   - Use logrus replace gorm default logger
   - Use hook to report span message
-- Provider
+### Provider
   - Out-of-the-box default opentelemetry provider
   - Support setting via environment variables
----
-Set logger
+
+### How to Use ?
+### Set logger
+
 ~~~go
+package main
 import(
 	"gorm.io/gorm/logger"
 	"gorm.io/plugin/opentelemetry/logging/logrus"
@@ -31,14 +33,16 @@ func init(){
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
 }
 ~~~
-Set tracing and metrics
+### Set tracing and metrics
+
 ~~~go
+package main
 import(
 	"gorm.io/plugin/opentelemetry/tracing"
 )
 func init(){
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
@@ -48,3 +52,6 @@ func init(){
 	}
 }
 ~~~
+
+### More info
+See [example](examples/)
