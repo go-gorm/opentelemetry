@@ -88,7 +88,7 @@ func main() {
 		logrus.NewWriter(),
 		logger.Config{
 			SlowThreshold: time.Millisecond,
-			LogLevel:      logger.Info,
+			LogLevel:      logger.Warn,
 			Colorful:      false,
 		},
 	)
@@ -111,6 +111,7 @@ func main() {
 	if err := db.WithContext(ctx).Raw("SELECT 42").Scan(&num).Error; err != nil {
 		panic(err)
 	}
-
-	PrintTraceID(ctx)
+	if os.Getenv("OTEL_EXPORTER_JAEGER_ENDPOINT") != "" {
+		PrintTraceID(ctx)
+	}
 }

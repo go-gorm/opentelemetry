@@ -1,9 +1,17 @@
 Stdout exporter (default):
 
-go run .
+`go run .`
 
+![stdout.png](static/stdout.png)
+
+---
 Jaeger exporter:
 
 docker: `docker-compose up -d`
 
 run: `OTEL_EXPORTER_JAEGER_ENDPOINT=http://localhost:14268/api/traces go run .`
+
+View Trace
+You can then navigate to http://localhost:16686 to access the Jaeger UI.
+![static/jeager.png](static/jeager.png)
+        
