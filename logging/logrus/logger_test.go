@@ -46,7 +46,6 @@ func TestLogger(t *testing.T) {
 		},
 	)
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
-
 	if err != nil {
 		panic(err)
 	}
