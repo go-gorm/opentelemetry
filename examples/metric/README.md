@@ -13,9 +13,8 @@ Dockers starts 2 services:
 - http://localhost:9090/graph - Prometheus configured to scrape our target.
 
 You can use Prometheus to query counters:
-
 ```
-go_sql_connections_closed_max_idle
+go_sql_connections_max_idle
 ```
 
 ### Screenshots![prometheus.png](static/prometheus.png)
