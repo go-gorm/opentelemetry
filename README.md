@@ -31,7 +31,7 @@ func init(){
 			Colorful:      false,
 		},
 	)
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), 	      &gorm.Config{Logger: logger})
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"),&gorm.Config{Logger: logger})
 }
 ~~~
 ### Set tracing and metrics
@@ -55,5 +55,29 @@ func init(){
 	}
 }
 ~~~
+
+### Set only tracing
+~~~go
+package main
+
+import(
+	"gorm.io/plugin/opentelemetry/tracing"
+)
+
+func init(){
+
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	if err := db.Use(tracing.NewPlugin(tracing.WithoutMetrics())); err != nil {
+		panic(err)
+	}
+}
+~~~
+
+
+
 ### More info
 See [examples](examples/)
