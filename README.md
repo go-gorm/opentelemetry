@@ -12,9 +12,8 @@
   - Out-of-the-box default opentelemetry provider
   - Support setting via environment variables
 
-### How to Use ?
+## How to Use ?
 ### Set logger
-
 ~~~go
 package main
 
@@ -56,6 +55,5 @@ func init(){
 	}
 }
 ~~~
-
 ### More info
-See [example](examples/)
+See [examples](examples/)
