@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel/metric/global"
+	"go.opentelemetry.io/otel/sdk/metric"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,7 +16,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/metric/global"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/driver/sqlite"
@@ -85,13 +87,13 @@ func TraceURL(span trace.Span) string {
 }
 
 func configureOpentelemetry() {
-	exporter := configureMetrics()
+	configureMetrics()
 
 	if err := runtimemetrics.Start(); err != nil {
 		panic(err)
 	}
 
-	http.HandleFunc("/metrics", exporter.ServeHTTP)
+	http.Handle("/metrics", promhttp.Handler())
 	fmt.Println("listenening on http://localhost:8088/metrics")
 
 	go func() {
@@ -100,24 +102,18 @@ func configureOpentelemetry() {
 }
 
 func configureMetrics() *prometheus.Exporter {
-	config := prometheus.Config{}
-
-	ctrl := controller.New(
-		processor.NewFactory(
-			selector.NewWithHistogramDistribution(
-				histogram.WithExplicitBoundaries(config.DefaultHistogramBoundaries),
-			),
-			aggregation.CumulativeTemporalitySelector(),
-			processor.WithMemory(true),
-		),
-	)
-
-	exporter, err := prometheus.New(config, ctrl)
+	exporter, err := prometheus.New()
+	if err != nil {
+		panic(err)
+	}
 	if err != nil {
 		panic(err)
 	}
 
-	global.SetMeterProvider(exporter.MeterProvider())
+	provider := metric.NewMeterProvider(
+		metric.WithReader(exporter),
+	)
+	global.SetMeterProvider(provider)
 
 	return exporter
 }
@@ -129,7 +125,7 @@ func main() {
 	configureOpentelemetry()
 	defer shutdown()
 
-	logger := logger.New(
+	l := logger.New(
 		logrus.NewWriter(),
 		logger.Config{
 			SlowThreshold: time.Millisecond,
@@ -138,7 +134,7 @@ func main() {
 		},
 	)
 
-	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: logger})
+	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{Logger: l})
 	if err != nil {
 		panic(err)
 	}
