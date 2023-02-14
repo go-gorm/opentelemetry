@@ -6,16 +6,13 @@ import (
 	"github.com/sirupsen/logrus"
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/metric/global"
-	controller "go.opentelemetry.io/otel/sdk/metric/controller/basic"
-	"go.opentelemetry.io/otel/sdk/metric/export/aggregation"
-	processor "go.opentelemetry.io/otel/sdk/metric/processor/basic"
-	"go.opentelemetry.io/otel/sdk/metric/selector/simple"
+	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
+
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
@@ -25,8 +22,8 @@ type OtelProvider interface {
 }
 
 type otelProvider struct {
-	traceExp      *otlptrace.Exporter
-	metricsPusher *controller.Controller
+	traceExp      sdktrace.SpanExporter
+	metricsPusher sdkmetric.Exporter
 }
 
 func (p *otelProvider) Shutdown(ctx context.Context) error {
@@ -39,7 +36,7 @@ func (p *otelProvider) Shutdown(ctx context.Context) error {
 	}
 
 	if p.metricsPusher != nil {
-		if err = p.metricsPusher.Stop(ctx); err != nil {
+		if err = p.metricsPusher.Shutdown(ctx); err != nil {
 			otel.Handle(err)
 		}
 	}
@@ -48,11 +45,11 @@ func (p *otelProvider) Shutdown(ctx context.Context) error {
 }
 
 // NewOpenTelemetryProvider Initializes an otlp trace and metrics provider
-func NewOpenTelemetryProvider(opts ...Option) *otelProvider {
+func NewOpenTelemetryProvider(opts ...Option) OtelProvider {
 	var (
-		err           error
-		traceExp      *otlptrace.Exporter
-		metricsPusher *controller.Controller
+		err       error
+		traceExp  sdktrace.SpanExporter
+		metricExp sdkmetric.Exporter
 	)
 
 	ctx := context.TODO()
@@ -110,10 +107,9 @@ func NewOpenTelemetryProvider(opts ...Option) *otelProvider {
 
 	// Metrics
 	if cfg.enableMetrics {
-		// prometheus only supports CumulativeTemporalitySelector
-		exportKindSelector := aggregation.CumulativeTemporalitySelector()
-
-		var metricsClientOpts []otlpmetricgrpc.Option
+		metricsClientOpts := []otlpmetricgrpc.Option{
+			otlpmetricgrpc.WithAggregationSelector(sdkmetric.DefaultAggregationSelector),
+		}
 		if cfg.exportEndpoint != "" {
 			metricsClientOpts = append(metricsClientOpts, otlpmetricgrpc.WithEndpoint(cfg.exportEndpoint))
 		}
@@ -124,26 +120,17 @@ func NewOpenTelemetryProvider(opts ...Option) *otelProvider {
 			metricsClientOpts = append(metricsClientOpts, otlpmetricgrpc.WithInsecure())
 		}
 
-		// metrics client
-		metricClient := otlpmetricgrpc.NewClient(metricsClientOpts...)
-
 		// metrics exporter
-		metricExp, err := otlpmetric.New(ctx, metricClient, otlpmetric.WithMetricAggregationTemporalitySelector(exportKindSelector))
+		metricExp, err = otlpmetricgrpc.New(ctx,
+			metricsClientOpts...,
+		)
 		handleInitErr(err, "Failed to create the collector metric exporter")
 
 		// metrics pusher
-		pusher := controller.New(
-			processor.NewFactory(
-				simple.NewWithHistogramDistribution(),
-				metricExp,
-			),
-			controller.WithResource(res),
-			controller.WithExporter(metricExp),
+		meterProvider := sdkmetric.NewMeterProvider(
+			sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExp)),
 		)
-		global.SetMeterProvider(pusher)
-
-		err = pusher.Start(ctx)
-		handleInitErr(err, "Failed to start metrics pusher")
+		global.SetMeterProvider(meterProvider)
 
 		err = runtimemetrics.Start()
 		handleInitErr(err, "Failed to start runtime metrics collector")
@@ -151,7 +138,7 @@ func NewOpenTelemetryProvider(opts ...Option) *otelProvider {
 
 	return &otelProvider{
 		traceExp:      traceExp,
-		metricsPusher: metricsPusher,
+		metricsPusher: metricExp,
 	}
 }
 
