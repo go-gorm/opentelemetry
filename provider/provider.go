@@ -107,7 +107,9 @@ func NewOpenTelemetryProvider(opts ...Option) OtelProvider {
 
 	// Metrics
 	if cfg.enableMetrics {
-		var metricsClientOpts []otlpmetricgrpc.Option
+		metricsClientOpts := []otlpmetricgrpc.Option{
+			otlpmetricgrpc.WithAggregationSelector(sdkmetric.DefaultAggregationSelector),
+		}
 		if cfg.exportEndpoint != "" {
 			metricsClientOpts = append(metricsClientOpts, otlpmetricgrpc.WithEndpoint(cfg.exportEndpoint))
 		}
@@ -120,7 +122,7 @@ func NewOpenTelemetryProvider(opts ...Option) OtelProvider {
 
 		// metrics exporter
 		metricExp, err = otlpmetricgrpc.New(ctx,
-			otlpmetricgrpc.WithAggregationSelector(sdkmetric.DefaultAggregationSelector),
+			metricsClientOpts...,
 		)
 		handleInitErr(err, "Failed to create the collector metric exporter")
 
