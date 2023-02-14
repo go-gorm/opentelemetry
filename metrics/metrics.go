@@ -109,7 +109,6 @@ func ReportDBStatsMetrics(db *sql.DB) {
 		connsClosedMaxIdleTime,
 		connsClosedMaxLifetime,
 	)
-
 	if err != nil {
 		panic(err)
 	}
