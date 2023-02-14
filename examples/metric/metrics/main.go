@@ -107,10 +107,6 @@ func configureMetrics() *prometheus.Exporter {
 	if err != nil {
 		panic(err)
 	}
-	if err != nil {
-		panic(err)
-	}
-
 	provider := metric.NewMeterProvider(
 		metric.WithReader(exporter),
 	)
