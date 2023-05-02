@@ -5,7 +5,6 @@ import (
 	"database/sql"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/metric/instrument"
@@ -21,7 +20,7 @@ type config struct {
 	meterProvider metric.MeterProvider
 	meter         metric.Meter
 
-	attrs []attribute.KeyValue
+	attrs []metric.ObserveOption
 }
 
 func newConfig() *config {
