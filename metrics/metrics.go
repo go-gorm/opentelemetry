@@ -3,10 +3,8 @@ package metrics
 import (
 	"context"
 	"database/sql"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -25,7 +23,7 @@ type config struct {
 func newConfig() *config {
 	c := &config{
 		tracerProvider: otel.GetTracerProvider(),
-		meterProvider:  global.MeterProvider(),
+		meterProvider:  otel.GetMeterProvider(),
 		tracer:         nil,
 		meter:          nil,
 		opts:           nil,
