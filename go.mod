@@ -4,21 +4,21 @@ go 1.20
 
 require (
 	github.com/sirupsen/logrus v1.9.0
-	github.com/stretchr/testify v1.8.2
-	go.opentelemetry.io/contrib/instrumentation/runtime v0.41.0
+	github.com/stretchr/testify v1.8.4
+	go.opentelemetry.io/contrib/instrumentation/runtime v0.42.0
 	go.opentelemetry.io/contrib/propagators/b3 v1.16.0
 	go.opentelemetry.io/contrib/propagators/jaeger v1.16.0
 	go.opentelemetry.io/contrib/propagators/opencensus v0.41.0
 	go.opentelemetry.io/contrib/propagators/ot v1.16.0
-	go.opentelemetry.io/otel v1.15.1
+	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v0.38.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.15.1
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.15.1
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.15.1
-	go.opentelemetry.io/otel/metric v0.38.1
+	go.opentelemetry.io/otel/metric v1.16.0
 	go.opentelemetry.io/otel/sdk v1.15.1
 	go.opentelemetry.io/otel/sdk/metric v0.38.1
-	go.opentelemetry.io/otel/trace v1.15.1
+	go.opentelemetry.io/otel/trace v1.16.0
 	gorm.io/driver/sqlite v1.5.0
 	gorm.io/gorm v1.25.0
 )
