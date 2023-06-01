@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/metric/global"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 
@@ -130,7 +129,7 @@ func NewOpenTelemetryProvider(opts ...Option) OtelProvider {
 		meterProvider := sdkmetric.NewMeterProvider(
 			sdkmetric.WithReader(sdkmetric.NewPeriodicReader(metricExp)),
 		)
-		global.SetMeterProvider(meterProvider)
+		otel.SetMeterProvider(meterProvider)
 
 		err = runtimemetrics.Start()
 		handleInitErr(err, "Failed to start runtime metrics collector")

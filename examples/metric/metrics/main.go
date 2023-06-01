@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/otel/metric/global"
 	"go.opentelemetry.io/otel/sdk/metric"
 
 	runtimemetrics "go.opentelemetry.io/contrib/instrumentation/runtime"
@@ -110,7 +109,7 @@ func configureMetrics() *prometheus.Exporter {
 	provider := metric.NewMeterProvider(
 		metric.WithReader(exporter),
 	)
-	global.SetMeterProvider(provider)
+	otel.SetMeterProvider(provider)
 
 	return exporter
 }
