@@ -3,6 +3,7 @@ package metrics
 import (
 	"context"
 	"database/sql"
+
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
