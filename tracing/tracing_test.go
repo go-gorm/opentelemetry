@@ -17,6 +17,7 @@ import (
 )
 
 type Test struct {
+	opts    []Option
 	do      func(ctx context.Context, db *gorm.DB)
 	require func(t *testing.T, spans []sdktrace.ReadOnlySpan)
 }
@@ -70,6 +71,35 @@ func TestOtel(t *testing.T) {
 				require.Equal(t, "SELECT foo_bar", stmt.AsString())
 			},
 		},
+		{
+			opts: []Option{WithoutQueryVariables()},
+			do: func(ctx context.Context, db *gorm.DB) {
+				err := db.Exec("CREATE TABLE foo (id int)").Error
+				require.NoError(t, err)
+				var num int
+				param := 42
+				err = db.WithContext(ctx).Table("foo").Select("id", param).Where("id = ?", param).Scan(&num).Error
+				require.NoError(t, err)
+			},
+			require: func(t *testing.T, spans []sdktrace.ReadOnlySpan) {
+				for _, s := range spans {
+					fmt.Printf("span=%#v\n", s)
+				}
+				require.Equal(t, 2, len(spans))
+				require.Equal(t, "gorm.Row", spans[1].Name())
+				require.Equal(t, trace.SpanKindClient, spans[1].SpanKind())
+
+				m := attrMap(spans[1].Attributes())
+
+				sys, ok := m[semconv.DBSystemKey]
+				require.True(t, ok)
+				require.Equal(t, "sqlite", sys.AsString())
+
+				stmt, ok := m[semconv.DBStatementKey]
+				require.True(t, ok)
+				require.Equal(t, "SELECT id FROM `foo` WHERE id = ?", stmt.AsString())
+			},
+		},
 	}
 
 	for i, test := range tests {
@@ -80,7 +110,7 @@ func TestOtel(t *testing.T) {
 			db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 			require.NoError(t, err)
 
-			err = db.Use(NewPlugin(WithTracerProvider(provider)))
+			err = db.Use(NewPlugin(append(test.opts, WithTracerProvider(provider))...))
 			require.NoError(t, err)
 
 			test.do(context.TODO(), db)

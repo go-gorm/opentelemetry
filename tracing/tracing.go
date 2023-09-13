@@ -116,16 +116,13 @@ func (p *otelPlugin) after() gormHookFunc {
 		}
 
 		vars := tx.Statement.Vars
+
+		var query string
 		if p.excludeQueryVars {
-			// Replace query variables with '?' to mask them
-			vars = make([]interface{}, len(tx.Statement.Vars))
-
-			for i := 0; i < len(vars); i++ {
-				vars[i] = "?"
-			}
+			query = tx.Statement.SQL.String()
+		} else {
+			query = tx.Dialector.Explain(tx.Statement.SQL.String(), vars...)
 		}
-
-		query := tx.Dialector.Explain(tx.Statement.SQL.String(), vars...)
 
 		attrs = append(attrs, semconv.DBStatementKey.String(p.formatQuery(query)))
 		if tx.Statement.Table != "" {
