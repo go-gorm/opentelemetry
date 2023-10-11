@@ -43,9 +43,9 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric v0.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v0.19.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230526015343-6ee61e4f9d5f // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230526161137-0005af68ea54 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230526161137-0005af68ea54 // indirect
