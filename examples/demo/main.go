@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/trace"
@@ -21,29 +20,8 @@ import (
 
 func ConfigureOpentelemetry(ctx context.Context) func() {
 	switch {
-	case os.Getenv("OTEL_EXPORTER_JAEGER_ENDPOINT") != "":
-		return configureJaeger(ctx)
 	default:
 		return configureStdout(ctx)
-	}
-}
-
-func configureJaeger(ctx context.Context) func() {
-	provider := sdktrace.NewTracerProvider()
-	otel.SetTracerProvider(provider)
-
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint())
-	if err != nil {
-		panic(err)
-	}
-
-	bsp := sdktrace.NewBatchSpanProcessor(exp)
-	provider.RegisterSpanProcessor(bsp)
-
-	return func() {
-		if err := provider.Shutdown(ctx); err != nil {
-			panic(err)
-		}
 	}
 }
 
