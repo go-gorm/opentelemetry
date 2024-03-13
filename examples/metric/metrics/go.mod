@@ -32,7 +32,7 @@ require (
 	github.com/sirupsen/logrus v1.9.2 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
-	google.golang.org/protobuf v1.31.0 // indirect
+	google.golang.org/protobuf v1.33.0 // indirect
 )
 
 replace gorm.io/plugin/opentelemetry => ./../../..
