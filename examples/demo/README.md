@@ -42,5 +42,5 @@ You can then navigate to http://localhost:16686 to access the Jaeger UI.
 
 #### Screenshots
 
-![static/jeager.png](static/jeager.png)
+![static/jaeger.png](static/jaeger.png)
 
