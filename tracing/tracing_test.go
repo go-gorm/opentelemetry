@@ -44,6 +44,10 @@ func TestOtel(t *testing.T) {
 				stmt, ok := m[semconv.DBStatementKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT 42", stmt.AsString())
+
+				operation, ok := m[semconv.DBOperationKey]
+				require.True(t, ok)
+				require.Equal(t, "select", operation.AsString())
 			},
 		},
 		{
@@ -69,6 +73,10 @@ func TestOtel(t *testing.T) {
 				stmt, ok := m[semconv.DBStatementKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT foo_bar", stmt.AsString())
+
+				operation, ok := m[semconv.DBOperationKey]
+				require.True(t, ok)
+				require.Equal(t, "select", operation.AsString())
 			},
 		},
 		{
@@ -98,6 +106,10 @@ func TestOtel(t *testing.T) {
 				stmt, ok := m[semconv.DBStatementKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT id FROM `foo` WHERE id = ?", stmt.AsString())
+
+				operation, ok := m[semconv.DBOperationKey]
+				require.True(t, ok)
+				require.Equal(t, "select", operation.AsString())
 			},
 		},
 	}
