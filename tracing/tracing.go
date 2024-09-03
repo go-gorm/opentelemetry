@@ -5,6 +5,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"io"
+	"regexp"
+	"strings"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -16,7 +18,14 @@ import (
 	"gorm.io/plugin/opentelemetry/metrics"
 )
 
-var dbRowsAffected = attribute.Key("db.rows_affected")
+var (
+	firstWordRegex   = regexp.MustCompile(`^\w+`)
+	cCommentRegex    = regexp.MustCompile(`(?is)/\*.*?\*/`)
+	lineCommentRegex = regexp.MustCompile(`(?im)(?:--|#).*?$`)
+	sqlPrefixRegex   = regexp.MustCompile(`^[\s;]*`)
+
+	dbRowsAffected = attribute.Key("db.rows_affected")
+)
 
 type otelPlugin struct {
 	provider         trace.TracerProvider
@@ -124,7 +133,9 @@ func (p *otelPlugin) after() gormHookFunc {
 			query = tx.Dialector.Explain(tx.Statement.SQL.String(), vars...)
 		}
 
-		attrs = append(attrs, semconv.DBStatementKey.String(p.formatQuery(query)))
+		formatQuery := p.formatQuery(query)
+		attrs = append(attrs, semconv.DBStatementKey.String(formatQuery))
+		attrs = append(attrs, semconv.DBOperationKey.String(dbOperation(formatQuery)))
 		if tx.Statement.Table != "" {
 			attrs = append(attrs, semconv.DBSQLTableKey.String(tx.Statement.Table))
 		}
@@ -171,4 +182,11 @@ func dbSystem(tx *gorm.DB) attribute.KeyValue {
 	default:
 		return attribute.KeyValue{}
 	}
+}
+
+func dbOperation(query string) string {
+	s := cCommentRegex.ReplaceAllString(query, "")
+	s = lineCommentRegex.ReplaceAllString(s, "")
+	s = sqlPrefixRegex.ReplaceAllString(s, "")
+	return strings.ToLower(firstWordRegex.FindString(s))
 }
