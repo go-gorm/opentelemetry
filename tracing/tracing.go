@@ -179,6 +179,8 @@ func dbSystem(tx *gorm.DB) attribute.KeyValue {
 		return semconv.DBSystemKey.String("sqlserver")
 	case "clickhouse":
 		return semconv.DBSystemKey.String("clickhouse")
+	case "spanner":
+		return semconv.DBSystemKey.String("spanner")
 	default:
 		return attribute.KeyValue{}
 	}
