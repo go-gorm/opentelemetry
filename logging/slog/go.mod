@@ -1,6 +1,6 @@
 module gorm.io/plugin/opentelemetry/logging/slog
 
-go 1.22.5
+go 1.21
 
 require (
 	go.opentelemetry.io/otel v1.31.0

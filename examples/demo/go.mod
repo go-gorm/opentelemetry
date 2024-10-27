@@ -2,8 +2,6 @@ module gorm.io/plugin/example
 
 go 1.21
 
-toolchain go1.22.5
-
 replace gorm.io/plugin/opentelemetry => ./../..
 
 require (
@@ -22,7 +20,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/mattn/go-sqlite3 v1.14.16 // indirect
-	github.com/sirupsen/logrus v1.9.2 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 )
