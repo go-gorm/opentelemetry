@@ -1,6 +1,6 @@
 module gorm.io/plugin/example
 
-go 1.21
+go 1.22
 
 replace gorm.io/plugin/opentelemetry => ./../..
 

@@ -1,6 +1,6 @@
 module github.com/uptrace/opentelemetry-go-extra/example/prometheus/metrics
 
-go 1.21
+go 1.22
 
 require (
 	github.com/prometheus/client_golang v1.17.0
