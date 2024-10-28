@@ -3,12 +3,13 @@ package slog
 import (
 	"bytes"
 	"context"
-	"github.com/stretchr/testify/assert"
 	"log/slog"
 	"os"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
