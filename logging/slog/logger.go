@@ -2,6 +2,7 @@ package slog
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 )
 
@@ -70,4 +71,15 @@ func (w *Writer) Logger() *slog.Logger {
 
 func (w *Writer) Printf(format string, v ...interface{}) {
 	w.log.Info(fmt.Sprintf(format, v...))
+}
+
+func (w *Writer) SetLvel(level slog.Level) {
+	w.config.coreConfig.level.Set(level)
+	w.config.coreConfig.withLevel = true
+}
+
+func (w *Writer) SetOutput(writer io.Writer) {
+	log := slog.New(NewTraceHandler(writer, w.config.coreConfig.opt, w.config.traceConfig))
+	w.config.coreConfig.writer = writer
+	w.log = log
 }

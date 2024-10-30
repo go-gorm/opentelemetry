@@ -81,7 +81,7 @@ func TestLogger(t *testing.T) {
 	errSpan.End()
 }
 
-func TestLogger1(t *testing.T) {
+func TestLoggerBase(t *testing.T) {
 	ctx := context.Background()
 
 	buf := new(bytes.Buffer)
@@ -89,17 +89,13 @@ func TestLogger1(t *testing.T) {
 	shutdown := stdoutProvider(ctx)
 	defer shutdown()
 
-	logger := logger.New(
-		NewWriter(
-			WithTraceErrorSpanLevel(slog.LevelWarn),
-			WithRecordStackTraceInSpan(true),
-		), logger.Config{
-			SlowThreshold: time.Millisecond,
-			LogLevel:      logger.Warn,
-			Colorful:      false,
-		})
+	logger := NewWriter(
+		WithTraceErrorSpanLevel(slog.LevelWarn),
+		WithOutput(buf),
+		WithRecordStackTraceInSpan(true),
+	)
 
-	logger.Info(ctx, "log from origin slog")
+	logger.log.InfoContext(ctx, "log from origin slog")
 	assert.True(t, strings.Contains(buf.String(), "log from origin slog"))
 	buf.Reset()
 
@@ -107,9 +103,11 @@ func TestLogger1(t *testing.T) {
 
 	ctx, span := tracer.Start(ctx, "root")
 
-	assert.True(t, strings.Contains(buf.String(), "trace_id"))
-	assert.True(t, strings.Contains(buf.String(), "span_id"))
-	assert.True(t, strings.Contains(buf.String(), "trace_flags"))
+	// TODO fix it
+	logger.log.WarnContext(ctx, "hello world")
+	assert.True(t, strings.Contains(buf.String(), "TraceID"))
+	assert.True(t, strings.Contains(buf.String(), "SpanID"))
+	assert.True(t, strings.Contains(buf.String(), "TraceFlags"))
 	buf.Reset()
 
 	span.End()
@@ -131,14 +129,12 @@ func TestLogLevel(t *testing.T) {
 		WithRecordStackTraceInSpan(true),
 	)
 
-	/*	// output to buffer
-		logger.SetOutput(buf)
+	logger.SetOutput(buf)
+	logger.log.Debug("this is a debug log")
+	assert.False(t, strings.Contains(buf.String(), "this is a debug log"))
 
-		logger.Debug("this is a debug log")
-		assert.False(t, strings.Contains(buf.String(), "this is a debug log"))
+	logger.SetLvel(slog.LevelDebug)
 
-		logger.SetLevel(klog.LevelDebug)
-	*/
 	logger.log.Debug("this is a debug log msg")
 	assert.True(t, strings.Contains(buf.String(), "this is a debug log"))
 }
