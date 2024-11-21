@@ -89,13 +89,13 @@ func TestLoggerBase(t *testing.T) {
 	shutdown := stdoutProvider(ctx)
 	defer shutdown()
 
-	logger := NewWriter(
+	writer := NewWriter(
 		WithTraceErrorSpanLevel(slog.LevelWarn),
 		WithOutput(buf),
 		WithRecordStackTraceInSpan(true),
 	)
 
-	logger.log.InfoContext(ctx, "log from origin slog")
+	writer.log.InfoContext(ctx, "log from origin slog")
 	assert.True(t, strings.Contains(buf.String(), "log from origin slog"))
 	buf.Reset()
 
@@ -103,17 +103,26 @@ func TestLoggerBase(t *testing.T) {
 
 	ctx, span := tracer.Start(ctx, "root")
 
-	// TODO fix it
-	logger.log.WarnContext(ctx, "hello world")
-	assert.True(t, strings.Contains(buf.String(), "TraceID"))
-	assert.True(t, strings.Contains(buf.String(), "SpanID"))
-	assert.True(t, strings.Contains(buf.String(), "TraceFlags"))
+	writer.log.WarnContext(ctx, "hello world")
+	assert.True(t, strings.Contains(buf.String(), "trace_id"))
+	assert.True(t, strings.Contains(buf.String(), "span_id"))
+	assert.True(t, strings.Contains(buf.String(), "trace_flags"))
 	buf.Reset()
 
 	span.End()
 
 	ctx, child := tracer.Start(ctx, "child")
-
+	logger := logger.New(
+		NewWriter(),
+		logger.Config{
+			SlowThreshold: time.Millisecond,
+			LogLevel:      logger.Info,
+			Colorful:      false,
+		},
+	)
+	logger.Info(ctx, "Info %s", "this is a info log")
+	logger.Warn(ctx, "warn %s", "this is a warn log")
+	logger.Error(ctx, "error %s", "this is a error log")
 	child.End()
 
 	_, errSpan := tracer.Start(ctx, "error")
