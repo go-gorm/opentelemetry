@@ -33,7 +33,7 @@ func newConfig() *config {
 }
 
 // ReportDBStatsMetrics reports DBStats metrics using OpenTelemetry Metrics API.
-func ReportDBStatsMetrics(db *sql.DB) {
+func ReportDBStatsMetrics(db *sql.DB, opts ...metric.ObserveOption) {
 	cfg := newConfig()
 
 	if cfg.meter == nil {
@@ -41,7 +41,7 @@ func ReportDBStatsMetrics(db *sql.DB) {
 	}
 
 	meter := cfg.meter
-	opts := cfg.opts
+	opts = append(cfg.opts, opts...)
 
 	maxOpenConns, _ := meter.Int64ObservableGauge(
 		"go.sql.connections_max_open",
