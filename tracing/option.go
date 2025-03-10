@@ -49,3 +49,10 @@ func WithoutMetrics() Option {
 		p.excludeMetrics = true
 	}
 }
+
+// WithRecordStackTrace includes a stack trace inside exception events
+func WithRecordStackTrace() Option {
+	return func(p *otelPlugin) {
+		p.recordStackTraceInSpan = true
+	}
+}

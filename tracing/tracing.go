@@ -28,12 +28,13 @@ var (
 )
 
 type otelPlugin struct {
-	provider         trace.TracerProvider
-	tracer           trace.Tracer
-	attrs            []attribute.KeyValue
-	excludeQueryVars bool
-	excludeMetrics   bool
-	queryFormatter   func(query string) string
+	provider               trace.TracerProvider
+	tracer                 trace.Tracer
+	attrs                  []attribute.KeyValue
+	excludeQueryVars       bool
+	excludeMetrics         bool
+	recordStackTraceInSpan bool
+	queryFormatter         func(query string) string
 }
 
 func NewPlugin(opts ...Option) gorm.Plugin {
@@ -115,7 +116,7 @@ func (p *otelPlugin) after() gormHookFunc {
 		if !span.IsRecording() {
 			return
 		}
-		defer span.End()
+		defer span.End(trace.WithStackTrace(p.recordStackTraceInSpan))
 
 		attrs := make([]attribute.KeyValue, 0, len(p.attrs)+4)
 		attrs = append(attrs, p.attrs...)
