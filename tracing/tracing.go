@@ -11,8 +11,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
+	"gorm.io/driver/clickhouse"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
 	"gorm.io/plugin/opentelemetry/metrics"
@@ -106,7 +109,30 @@ func (p otelPlugin) Initialize(db *gorm.DB) (err error) {
 
 func (p *otelPlugin) before(spanName string) gormHookFunc {
 	return func(tx *gorm.DB) {
-		tx.Statement.Context, _ = p.tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
+		ctx, span := p.tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
+		tx.Statement.Context = ctx
+
+		// `server.address` is required in the latest semconv
+		var serverAddrAttr attribute.KeyValue
+		switch dialector := tx.Config.Dialector.(type) {
+		case *mysql.Dialector:
+			if dialector.Config.DSNConfig != nil && dialector.Config.DSNConfig.Addr != "" {
+				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSNConfig.Addr)
+				span.SetAttributes(serverAddrAttr)
+			}
+		case *clickhouse.Dialector:
+			if dialector.Config.DSN != "" {
+				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
+				span.SetAttributes(serverAddrAttr)
+			}
+		case *postgres.Dialector:
+			if dialector.Config.DSN != "" {
+				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
+				span.SetAttributes(serverAddrAttr)
+			}
+		default:
+
+		}
 	}
 }
 
@@ -135,10 +161,19 @@ func (p *otelPlugin) after() gormHookFunc {
 		}
 
 		formatQuery := p.formatQuery(query)
-		attrs = append(attrs, semconv.DBStatementKey.String(formatQuery))
-		attrs = append(attrs, semconv.DBOperationKey.String(dbOperation(formatQuery)))
+		attrs = append(attrs, semconv.DBQueryText(formatQuery))
+		operation := dbOperation(formatQuery)
+		attrs = append(attrs, semconv.DBOperationName(operation))
 		if tx.Statement.Table != "" {
-			attrs = append(attrs, semconv.DBSQLTableKey.String(tx.Statement.Table))
+			attrs = append(attrs, semconv.DBCollectionName(tx.Statement.Table))
+			// add attr `db.query.summary`
+			dbQuerySummary := operation + " " + tx.Statement.Table
+			attrs = append(attrs, semconv.DBQuerySummary(dbQuerySummary))
+
+			// according to semconv, we should update the span name here if `db.query.summary`is available
+			// Use `db.query.summary` as span name directly here instead of keeping the original span name like `gorm.Query`,
+			// as we cannot access the original span name here.
+			span.SetName(dbQuerySummary)
 		}
 		if tx.Statement.RowsAffected != -1 {
 			attrs = append(attrs, dbRowsAffected.Int64(tx.Statement.RowsAffected))
@@ -169,19 +204,19 @@ func (p *otelPlugin) formatQuery(query string) string {
 func dbSystem(tx *gorm.DB) attribute.KeyValue {
 	switch tx.Dialector.Name() {
 	case "mysql":
-		return semconv.DBSystemMySQL
+		return semconv.DBSystemNameMySQL
 	case "mssql":
-		return semconv.DBSystemMSSQL
+		return semconv.DBSystemNameMicrosoftSQLServer
 	case "postgres", "postgresql":
-		return semconv.DBSystemPostgreSQL
+		return semconv.DBSystemNamePostgreSQL
 	case "sqlite":
-		return semconv.DBSystemSqlite
+		return semconv.DBSystemNameSqlite
 	case "sqlserver":
-		return semconv.DBSystemKey.String("sqlserver")
+		return semconv.DBSystemNameMicrosoftSQLServer
 	case "clickhouse":
-		return semconv.DBSystemKey.String("clickhouse")
+		return semconv.DBSystemNameClickhouse
 	case "spanner":
-		return semconv.DBSystemKey.String("spanner")
+		return semconv.DBSystemNameGCPSpanner
 	default:
 		return attribute.KeyValue{}
 	}
