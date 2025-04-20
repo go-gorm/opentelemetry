@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/codes"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -37,15 +37,15 @@ func TestOtel(t *testing.T) {
 
 				m := attrMap(spans[0].Attributes())
 
-				sys, ok := m[semconv.DBSystemKey]
+				sys, ok := m[semconv.DBSystemNameKey]
 				require.True(t, ok)
 				require.Equal(t, "sqlite", sys.AsString())
 
-				stmt, ok := m[semconv.DBStatementKey]
+				stmt, ok := m[semconv.DBQueryTextKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT 42", stmt.AsString())
 
-				operation, ok := m[semconv.DBOperationKey]
+				operation, ok := m[semconv.DBOperationNameKey]
 				require.True(t, ok)
 				require.Equal(t, "select", operation.AsString())
 			},
@@ -66,15 +66,15 @@ func TestOtel(t *testing.T) {
 
 				m := attrMap(span.Attributes())
 
-				sys, ok := m[semconv.DBSystemKey]
+				sys, ok := m[semconv.DBSystemNameKey]
 				require.True(t, ok)
 				require.Equal(t, "sqlite", sys.AsString())
 
-				stmt, ok := m[semconv.DBStatementKey]
+				stmt, ok := m[semconv.DBQueryTextKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT foo_bar", stmt.AsString())
 
-				operation, ok := m[semconv.DBOperationKey]
+				operation, ok := m[semconv.DBOperationNameKey]
 				require.True(t, ok)
 				require.Equal(t, "select", operation.AsString())
 			},
@@ -94,20 +94,20 @@ func TestOtel(t *testing.T) {
 					fmt.Printf("span=%#v\n", s)
 				}
 				require.Equal(t, 2, len(spans))
-				require.Equal(t, "gorm.Row", spans[1].Name())
+				require.Equal(t, "select foo", spans[1].Name())
 				require.Equal(t, trace.SpanKindClient, spans[1].SpanKind())
 
 				m := attrMap(spans[1].Attributes())
 
-				sys, ok := m[semconv.DBSystemKey]
+				sys, ok := m[semconv.DBSystemNameKey]
 				require.True(t, ok)
 				require.Equal(t, "sqlite", sys.AsString())
 
-				stmt, ok := m[semconv.DBStatementKey]
+				stmt, ok := m[semconv.DBQueryTextKey]
 				require.True(t, ok)
 				require.Equal(t, "SELECT id FROM `foo` WHERE id = ?", stmt.AsString())
 
-				operation, ok := m[semconv.DBOperationKey]
+				operation, ok := m[semconv.DBOperationNameKey]
 				require.True(t, ok)
 				require.Equal(t, "select", operation.AsString())
 			},

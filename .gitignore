@@ -2,3 +2,6 @@
 metrics/test.db
 logging/logrus/test.db
 .DS_Store
+
+.vscode/
+

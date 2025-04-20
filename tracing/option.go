@@ -2,7 +2,7 @@ package tracing
 
 import (
 	"go.opentelemetry.io/otel/attribute"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -23,9 +23,9 @@ func WithAttributes(attrs ...attribute.KeyValue) Option {
 }
 
 // WithDBName configures a db.name attribute.
-func WithDBName(name string) Option {
+func WithDBSystem(name string) Option {
 	return func(p *otelPlugin) {
-		p.attrs = append(p.attrs, semconv.DBNameKey.String(name))
+		p.attrs = append(p.attrs, semconv.DBSystemNameKey.String(name))
 	}
 }
 
