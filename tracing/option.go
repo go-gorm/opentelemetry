@@ -56,3 +56,10 @@ func WithRecordStackTrace() Option {
 		p.recordStackTraceInSpan = true
 	}
 }
+
+// WithoutServerAddress excludes db.server_address attribute.
+func WithoutServerAddress() Option {
+	return func(p *otelPlugin) {
+		p.excludeServerAddress = true
+	}
+}
