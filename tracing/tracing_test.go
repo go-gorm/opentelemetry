@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -110,6 +111,39 @@ func TestOtel(t *testing.T) {
 				operation, ok := m[semconv.DBOperationNameKey]
 				require.True(t, ok)
 				require.Equal(t, "select", operation.AsString())
+			},
+		},
+		{
+			do: func(ctx context.Context, db *gorm.DB) {
+				var num int
+				db.Config.Dialector = &postgres.Dialector{
+					Config: &postgres.Config{
+						DSN: "test.dsn",
+					},
+				}
+				err := db.WithContext(ctx).Raw("SELECT 42").Scan(&num).Error
+				require.NoError(t, err)
+			},
+			require: func(t *testing.T, spans []sdktrace.ReadOnlySpan) {
+				m := attrMap(spans[0].Attributes())
+				require.Equal(t, "test.dsn", m[semconv.ServerAddressKey].AsString())
+			},
+		},
+		{
+			do: func(ctx context.Context, db *gorm.DB) {
+				var num int
+				db.Config.Dialector = &postgres.Dialector{
+					Config: &postgres.Config{
+						DSN: "test.dsn",
+					},
+				}
+				err := db.WithContext(ctx).Raw("SELECT 42").Scan(&num).Error
+				require.NoError(t, err)
+			},
+			opts: []Option{WithoutServerAddress()},
+			require: func(t *testing.T, spans []sdktrace.ReadOnlySpan) {
+				m := attrMap(spans[0].Attributes())
+				require.Equal(t, "", m[semconv.ServerAddressKey].AsString())
 			},
 		},
 	}

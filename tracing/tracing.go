@@ -36,6 +36,7 @@ type otelPlugin struct {
 	attrs                  []attribute.KeyValue
 	excludeQueryVars       bool
 	excludeMetrics         bool
+	excludeServerAddress   bool
 	recordStackTraceInSpan bool
 	queryFormatter         func(query string) string
 }
@@ -112,26 +113,28 @@ func (p *otelPlugin) before(spanName string) gormHookFunc {
 		ctx, span := p.tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
 		tx.Statement.Context = ctx
 
-		// `server.address` is required in the latest semconv
-		var serverAddrAttr attribute.KeyValue
-		switch dialector := tx.Config.Dialector.(type) {
-		case *mysql.Dialector:
-			if dialector.Config.DSNConfig != nil && dialector.Config.DSNConfig.Addr != "" {
-				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSNConfig.Addr)
-				span.SetAttributes(serverAddrAttr)
-			}
-		case *clickhouse.Dialector:
-			if dialector.Config.DSN != "" {
-				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
-				span.SetAttributes(serverAddrAttr)
-			}
-		case *postgres.Dialector:
-			if dialector.Config.DSN != "" {
-				serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
-				span.SetAttributes(serverAddrAttr)
-			}
-		default:
+		if !p.excludeServerAddress {
+			// `server.address` is required in the latest semconv
+			var serverAddrAttr attribute.KeyValue
+			switch dialector := tx.Config.Dialector.(type) {
+			case *mysql.Dialector:
+				if dialector.Config.DSNConfig != nil && dialector.Config.DSNConfig.Addr != "" {
+					serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSNConfig.Addr)
+					span.SetAttributes(serverAddrAttr)
+				}
+			case *clickhouse.Dialector:
+				if dialector.Config.DSN != "" {
+					serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
+					span.SetAttributes(serverAddrAttr)
+				}
+			case *postgres.Dialector:
+				if dialector.Config.DSN != "" {
+					serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
+					span.SetAttributes(serverAddrAttr)
+				}
+			default:
 
+			}
 		}
 	}
 }
