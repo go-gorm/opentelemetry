@@ -125,7 +125,6 @@ func TestOtel(t *testing.T) {
 				require.NoError(t, err)
 			},
 			require: func(t *testing.T, spans []sdktrace.ReadOnlySpan) {
-
 				m := attrMap(spans[0].Attributes())
 				require.Equal(t, "test.dsn", m[semconv.ServerAddressKey].AsString())
 			},
@@ -143,7 +142,6 @@ func TestOtel(t *testing.T) {
 			},
 			opts: []Option{WithoutServerAddress()},
 			require: func(t *testing.T, spans []sdktrace.ReadOnlySpan) {
-
 				m := attrMap(spans[0].Attributes())
 				require.Equal(t, "", m[semconv.ServerAddressKey].AsString())
 			},
