@@ -8,7 +8,6 @@ import (
 	"io"
 	"regexp"
 	"strings"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -111,24 +110,8 @@ func (p otelPlugin) Initialize(db *gorm.DB) (err error) {
 }
 
 type contextWrapper struct {
-	ctx context.Context
+	context.Context
 	parent context.Context
-}
-
-func (c contextWrapper) Deadline() (deadline time.Time, ok bool) {
-	return c.ctx.Deadline()
-}
-
-func (c contextWrapper) Done() <-chan struct{} {
-	return c.ctx.Done()
-}
-
-func (c contextWrapper) Err() error {
-	return c.ctx.Err()
-}
-
-func (c contextWrapper) Value(key any) any {
-	return c.ctx.Value(key)
 }
 
 
@@ -136,7 +119,7 @@ func (p *otelPlugin) before(spanName string) gormHookFunc {
 	return func(tx *gorm.DB) {
 		parentCtx := tx.Statement.Context
 		ctx, span := p.tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
-		tx.Statement.Context = contextWrapper{ctx: ctx, parent: parentCtx}
+		tx.Statement.Context = contextWrapper{ctx, parentCtx}
 
 		if !p.excludeServerAddress {
 			// `server.address` is required in the latest semconv
