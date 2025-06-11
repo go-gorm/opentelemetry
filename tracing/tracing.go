@@ -114,7 +114,6 @@ type contextWrapper struct {
 	parent context.Context
 }
 
-
 func (p *otelPlugin) before(spanName string) gormHookFunc {
 	return func(tx *gorm.DB) {
 		parentCtx := tx.Statement.Context
