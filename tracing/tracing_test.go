@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace/noop"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -165,6 +166,41 @@ func TestOtel(t *testing.T) {
 			test.require(t, spans)
 		})
 	}
+}
+
+func TestOtelPlugin_ContextRestoration(t *testing.T) {
+	provider := noop.NewTracerProvider()
+	p := &otelPlugin{provider: provider}
+	p.tracer = provider.Tracer("test")
+
+	origCtx := context.WithValue(context.Background(), "foo", "bar")
+	db := &gorm.DB{
+		Statement: &gorm.Statement{Context: origCtx},
+		Config:    &gorm.Config{},
+	}
+
+	// before should wrap context
+	before := p.before("test-span")
+	before(db)
+	cw, ok := db.Statement.Context.(contextWrapper)
+	require.True(t, ok)
+	require.Equal(t, origCtx, cw.parent)
+
+	// after should restore context
+	after := p.after()
+	after(db)
+	require.Equal(t, origCtx, db.Statement.Context)
+
+	origCtx = context.Background()
+	db = &gorm.DB{
+		Statement: &gorm.Statement{Context: origCtx},
+		Config:    &gorm.Config{},
+	}
+
+	// after should not panic if context is not a contextWrapper
+	after = p.after()
+	require.NotPanics(t, func() { after(db) })
+	require.Equal(t, origCtx, db.Statement.Context)
 }
 
 func attrMap(attrs []attribute.KeyValue) map[attribute.Key]attribute.Value {
