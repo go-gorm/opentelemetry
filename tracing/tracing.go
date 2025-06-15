@@ -1,6 +1,7 @@
 package tracing
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
@@ -108,10 +109,16 @@ func (p otelPlugin) Initialize(db *gorm.DB) (err error) {
 	return firstErr
 }
 
+type contextWrapper struct {
+	context.Context
+	parent context.Context
+}
+
 func (p *otelPlugin) before(spanName string) gormHookFunc {
 	return func(tx *gorm.DB) {
+		parentCtx := tx.Statement.Context
 		ctx, span := p.tracer.Start(tx.Statement.Context, spanName, trace.WithSpanKind(trace.SpanKindClient))
-		tx.Statement.Context = ctx
+		tx.Statement.Context = contextWrapper{ctx, parentCtx}
 
 		if !p.excludeServerAddress {
 			// `server.address` is required in the latest semconv
@@ -141,6 +148,13 @@ func (p *otelPlugin) before(spanName string) gormHookFunc {
 
 func (p *otelPlugin) after() gormHookFunc {
 	return func(tx *gorm.DB) {
+		defer func() {
+			if c, ok := tx.Statement.Context.(contextWrapper); ok {
+				// recover previous context
+				tx.Statement.Context = c.parent
+			}
+		}()
+
 		span := trace.SpanFromContext(tx.Statement.Context)
 		if !span.IsRecording() {
 			return
