@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"io"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -109,6 +110,40 @@ func (p otelPlugin) Initialize(db *gorm.DB) (err error) {
 	return firstErr
 }
 
+// extractServerAddress extracts host:port from DSN while excluding sensitive information
+func extractServerAddress(dsn string) string {
+	if dsn == "" {
+		return ""
+	}
+
+	// Try to parse as URL first
+	u, err := url.Parse(dsn)
+	if err == nil && u.Scheme != "" && u.Host != "" {
+		// Valid URL with scheme and host
+		return u.Host
+	}
+
+	// For formats like "host:port" or "user:pass@host:port/db"
+	result := dsn
+
+	// Remove user:pass@ part if present
+	if idx := strings.LastIndex(result, "@"); idx != -1 {
+		result = result[idx+1:]
+	}
+
+	// Remove /database part
+	if idx := strings.Index(result, "/"); idx != -1 {
+		result = result[:idx]
+	}
+
+	// Remove query parameters
+	if idx := strings.Index(result, "?"); idx != -1 {
+		result = result[:idx]
+	}
+
+	return result
+}
+
 type contextWrapper struct {
 	context.Context
 	parent context.Context
@@ -131,13 +166,19 @@ func (p *otelPlugin) before(spanName string) gormHookFunc {
 				}
 			case *clickhouse.Dialector:
 				if dialector.Config.DSN != "" {
-					serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
-					span.SetAttributes(serverAddrAttr)
+					serverAddr := extractServerAddress(dialector.Config.DSN)
+					if serverAddr != "" {
+						serverAddrAttr = semconv.ServerAddressKey.String(serverAddr)
+						span.SetAttributes(serverAddrAttr)
+					}
 				}
 			case *postgres.Dialector:
 				if dialector.Config.DSN != "" {
-					serverAddrAttr = semconv.ServerAddressKey.String(dialector.Config.DSN)
-					span.SetAttributes(serverAddrAttr)
+					serverAddr := extractServerAddress(dialector.Config.DSN)
+					if serverAddr != "" {
+						serverAddrAttr = semconv.ServerAddressKey.String(serverAddr)
+						span.SetAttributes(serverAddrAttr)
+					}
 				}
 			default:
 
