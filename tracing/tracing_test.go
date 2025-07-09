@@ -292,6 +292,28 @@ func TestExtractServerAddress(t *testing.T) {
 			dsn:      "clickhouse://user:pass@localhost/db",
 			expected: "localhost",
 		},
+
+		// PostgreSQL specific formats
+		{
+			name:     "PostgreSQL key-value format with host and port",
+			dsn:      "user=local password=local dbname=local host=localhost port=5432 sslmode=disable",
+			expected: "localhost:5432",
+		},
+		{
+			name:     "PostgreSQL key-value format with IP address",
+			dsn:      "user=test password=secret host=127.0.0.1 port=5432 dbname=testdb",
+			expected: "127.0.0.1:5432",
+		},
+		{
+			name:     "PostgreSQL key-value format without port",
+			dsn:      "user=test password=secret host=localhost dbname=testdb sslmode=disable",
+			expected: "localhost",
+		},
+		{
+			name:     "PostgreSQL key-value format with IPv6",
+			dsn:      "user=test password=secret host=::1 port=5432 dbname=testdb",
+			expected: "[::1]:5432",
+		},
 	}
 
 	for _, tt := range tests {

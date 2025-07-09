@@ -123,6 +123,11 @@ func extractServerAddress(dsn string) string {
 		return u.Host
 	}
 
+	// Check if this is a PostgreSQL key-value format (e.g., "host=localhost port=5432 user=test...")
+	if strings.Contains(dsn, "=") && strings.Contains(dsn, " ") {
+		return extractFromKeyValueFormat(dsn)
+	}
+
 	// For formats like "host:port" or "user:pass@host:port/db"
 	result := dsn
 
@@ -142,6 +147,44 @@ func extractServerAddress(dsn string) string {
 	}
 
 	return result
+}
+
+// Extracts host:port from PostgreSQL key-value format DSN
+func extractFromKeyValueFormat(dsn string) string {
+	parts := strings.Fields(dsn)
+	var host, port string
+
+	for _, part := range parts {
+		if strings.Contains(part, "=") {
+			kv := strings.SplitN(part, "=", 2)
+			if len(kv) == 2 {
+				key := strings.TrimSpace(kv[0])
+				value := strings.TrimSpace(kv[1])
+
+				switch key {
+				case "host":
+					host = value
+				case "port":
+					port = value
+				}
+			}
+		}
+	}
+
+	if host == "" {
+		return ""
+	}
+
+	// Handle IPv6 addresses
+	if strings.Contains(host, ":") && !strings.HasPrefix(host, "[") {
+		host = "[" + host + "]"
+	}
+
+	if port != "" {
+		return host + ":" + port
+	}
+
+	return host
 }
 
 type contextWrapper struct {
