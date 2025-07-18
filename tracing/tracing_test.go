@@ -210,3 +210,116 @@ func attrMap(attrs []attribute.KeyValue) map[attribute.Key]attribute.Value {
 	}
 	return m
 }
+
+// TestExtractServerAddress tests the extractServerAddress function with various DSN formats
+func TestExtractServerAddress(t *testing.T) {
+	tests := []struct {
+		name     string
+		dsn      string
+		expected string
+	}{
+		// Common DSN formats
+		{
+			name:     "ClickHouse URL with credentials",
+			dsn:      "clickhouse://user:password@127.0.0.1:9000/database",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "ClickHouse URL without credentials",
+			dsn:      "clickhouse://127.0.0.1:9000/database",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "HTTP URL with credentials",
+			dsn:      "http://user:password@127.0.0.1:8123/database",
+			expected: "127.0.0.1:8123",
+		},
+		{
+			name:     "HTTPS URL with credentials",
+			dsn:      "https://user:password@127.0.0.1:8443/database",
+			expected: "127.0.0.1:8443",
+		},
+		{
+			name:     "TCP URL with query parameters",
+			dsn:      "tcp://127.0.0.1:9000?database=default&username=user&password=secret",
+			expected: "127.0.0.1:9000",
+		},
+
+		// Uncommon DSNs
+		{
+			name:     "Traditional format with credentials",
+			dsn:      "user:password@127.0.0.1:9000/database",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "Simple host:port format",
+			dsn:      "127.0.0.1:9000",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "Host with database",
+			dsn:      "127.0.0.1:9000/database",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "Host with query parameters",
+			dsn:      "127.0.0.1:9000?database=test&timeout=10s",
+			expected: "127.0.0.1:9000",
+		},
+		{
+			name:     "Complex format with all parts",
+			dsn:      "user:password@127.0.0.1:9000/database?param1=value1&param2=value2",
+			expected: "127.0.0.1:9000",
+		},
+
+		{
+			name:     "Empty DSN",
+			dsn:      "",
+			expected: "",
+		},
+		{
+			name:     "IPv6 address with credentials",
+			dsn:      "clickhouse://user:pass@[::1]:9000/db",
+			expected: "[::1]:9000",
+		},
+		{
+			name:     "IPv6 address without credentials",
+			dsn:      "tcp://[2001:db8::1]:9000?database=test",
+			expected: "[2001:db8::1]:9000",
+		},
+		{
+			name:     "Host without port",
+			dsn:      "clickhouse://user:pass@localhost/db",
+			expected: "localhost",
+		},
+
+		// PostgreSQL specific formats
+		{
+			name:     "PostgreSQL key-value format with host and port",
+			dsn:      "user=local password=local dbname=local host=localhost port=5432 sslmode=disable",
+			expected: "localhost:5432",
+		},
+		{
+			name:     "PostgreSQL key-value format with IP address",
+			dsn:      "user=test password=secret host=127.0.0.1 port=5432 dbname=testdb",
+			expected: "127.0.0.1:5432",
+		},
+		{
+			name:     "PostgreSQL key-value format without port",
+			dsn:      "user=test password=secret host=localhost dbname=testdb sslmode=disable",
+			expected: "localhost",
+		},
+		{
+			name:     "PostgreSQL key-value format with IPv6",
+			dsn:      "user=test password=secret host=::1 port=5432 dbname=testdb",
+			expected: "[::1]:5432",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractServerAddress(tt.dsn)
+			require.Equal(t, tt.expected, result)
+		})
+	}
+}
