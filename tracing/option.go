@@ -4,6 +4,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	semconv "go.opentelemetry.io/otel/semconv/v1.30.0"
 	"go.opentelemetry.io/otel/trace"
+	"gorm.io/gorm"
 )
 
 type Option func(p *otelPlugin)
@@ -57,9 +58,9 @@ func WithRecordStackTrace() Option {
 	}
 }
 
-// WithoutServerAddress excludes db.server_address attribute.
-func WithoutServerAddress() Option {
+// WithServerAddressProvider sets up a factory function that returns a server address given a Dialector
+func WithServerAddressProvider(serverAddressProvider func(dialector gorm.Dialector) string) Option {
 	return func(p *otelPlugin) {
-		p.excludeServerAddress = true
+		p.serverAddressProvider = serverAddressProvider
 	}
 }
